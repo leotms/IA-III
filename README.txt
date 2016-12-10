@@ -13,3 +13,8 @@ RUNNING:
   $ ./solve <input_file>
 
 ANSWER WILL BE INSIDE OUTPUT.TXT
+
+IMPORTANT:
+	MINISAT REQUIERES libghc-zlib-dev
+	IT CAN BE INSTALLED VIA
+		$ sudo apt-get install libghc-zlib-dev
