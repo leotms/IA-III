@@ -1,3 +1,12 @@
+/*  UNIVERSIDAD SIMON BOLIVAR
+    INTRODUCTION TO AI I (CI-5437)
+    AUTHORS:
+        LEONARDO MARTINEZ #11-10576
+        NICOLAS MAÑAN     #06-39883
+        JOEL RIVAS        #11-10866
+    LAST UPDATED: 10/10/2016.
+*/
+
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
@@ -7,23 +16,27 @@
 #include <vector>
 
 using namespace std;
-// global contants
-int N, M, T_SEG;
+int N, M, T_SEG, N_CLAUSES;
+int N_INST, N_SAT, N_UNSAT;
 
 //*****************************************************************************/
-// splits a line to separate its elemens into a vector
-void split(const string &s, char delim, vector<string> &elems) {
+
+// takes a string and line to separate its elements using a separator char and
+// pushes the result into a vector
+void split(const string &s, char separator, vector<string> &elems) {
     stringstream ss;
     ss.str(s);
     string item;
-    while (getline(ss, item, delim)) {
+    while (getline(ss, item, separator)) {
         elems.push_back(item);
     }
 }
 
-vector<string> split(const string &s, char delim) {
+// returns a vector containing the elements of a string s, separated by the
+// separator
+vector<string> split(const string &s, char separator) {
     vector<string> elems;
-    split(s, delim, elems);
+    split(s, separator, elems);
     return elems;
 }
 //*****************************************************************************/
@@ -58,14 +71,18 @@ int r(int ci, int cj, int cpi, int cpj) {
   return (N*M) + T_SEG + box;
 }
 
-
+//*****************************************************************************/
 int main(int argc, char ** argv) {
 
-  FILE * inputfile;
-  FILE * resfile;
-  ofstream outfile;
-  ofstream answerfile;
 
+  FILE * inputfile;      // will point to the input file with the instances
+  FILE * resfile;        // will point to the file where minsat stores the solution
+  ofstream outfile;      // points to the clauses.cnf
+  ofstream answerfile;   // points to the file containing all the solutions for instances.
+
+  if (argc < 2) {
+    cout << "ERROR: Missing input file with problem instances." << "\n";
+  }
 
   inputfile  = fopen(argv[1],"r");
   answerfile.open("output.txt");
@@ -74,6 +91,15 @@ int main(int argc, char ** argv) {
   size_t  len = 0;
   ssize_t read;
 
+  // message for user
+  cout << "Solving instances of " << argv[1] << "\n";
+
+  N_INST  = 0; // total number of instances in the file
+  N_SAT   = 0; // number of satisfiable instances
+  N_UNSAT = 0; // number of unsatisfiable instances
+
+  // reads each line of the input file. Each file is intended to cointan only
+  // one instance of the problem.
   while ((read = getline(&line, &len, inputfile)) != -1) {
     outfile << "c " << line;
     vector<string> info = split(line, ' ');
@@ -82,6 +108,7 @@ int main(int argc, char ** argv) {
 
     N = stoi(info[0]);
     M = stoi(info[1]);
+    N_CLAUSES = 0;
 
     // number of vertical segments + horizontal segments
     int SEG_HOR = (N+1)*M;
@@ -94,9 +121,6 @@ int main(int argc, char ** argv) {
     // we calculate the number of variables including T_SEG, Z and R.
     int T_VARIABLES = N*N*M*M + N*M + (T_SEG);
 
-    outfile << "c N : "<< N << "M : " << M << "\n";
-    // header for the cnf file
-    outfile << "p cnf " << T_VARIABLES << " 0\n";
 
     for(int i = 1; i <= N; i++){
       string row = values[i-1];
@@ -111,6 +135,7 @@ int main(int argc, char ** argv) {
           outfile << " -" << q(i,j,'s') << " 0\n";
           outfile << " -" << q(i,j,'e') << " 0\n";
           outfile << " -" << q(i,j,'w') << " 0\n";
+          N_CLAUSES += 4;
         } // the box has only one segment
         else if (row[j-1] =='1'){
           outfile << q(i,j,'n') << " " << q(i,j,'e') << " " << q(i,j,'s') << " " << q(i,j,'w') << " 0\n";
@@ -120,6 +145,7 @@ int main(int argc, char ** argv) {
           outfile << "-" << q(i,j,'n') << " -" << q(i,j,'e') << " 0\n";
           outfile << "-" << q(i,j,'n') << " -" << q(i,j,'s') << " 0\n";
           outfile << "-" << q(i,j,'e') << " -" << q(i,j,'w') << " 0\n";
+          N_CLAUSES += 7;
         } // the box has two segments
         else if (row[j-1] =='2'){
           outfile << " -" << q(i,j,'n') << " -" << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " 0\n";
@@ -132,7 +158,7 @@ int main(int argc, char ** argv) {
           outfile << q(i,j,'w') << " " << q(i,j,'n') << " " << q(i,j,'s') << " 0\n";
           outfile << "-" << q(i,j,'s') << " -" << q(i,j,'w') << " -" << q(i,j,'e') << " 0\n";
           outfile << q(i,j,'w') << " " << q(i,j,'n') << " " << q(i,j,'e') << " 0\n";
-
+          N_CLAUSES += 10;
         } // the box has three segments
         else if (row[j-1] =='3'){
           outfile << " -" << q(i,j,'n') << " -" << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " 0\n";
@@ -142,13 +168,14 @@ int main(int argc, char ** argv) {
           outfile << q(i,j,'s') << " " << q(i,j,'e') << " 0\n";
           outfile << q(i,j,'s') << " " << q(i,j,'w') << " 0\n";
           outfile << q(i,j,'w') << " " << q(i,j,'e') << " 0\n";
-
+          N_CLAUSES += 7;
         } // the box has all four segments
         else if (row[j-1] =='4'){
           outfile << q(i,j,'n') << " 0\n";
           outfile << q(i,j,'s') << " 0\n";
           outfile << q(i,j,'e') << " 0\n";
           outfile << q(i,j,'w') << " 0\n";
+          N_CLAUSES += 4;
         }
 
         // CHECK FOR TYPE 2 CLAUSES
@@ -157,18 +184,22 @@ int main(int argc, char ** argv) {
         if (j == 1) {
           outfile << q(i,1,'w') << " -"  << z(i,1) << " 0\n";
           outfile << " -" << q(i,1,'w') << " " << z(i,1) << " 0\n";
+          N_CLAUSES += 2;
         } // right border
         else if (j == N) {
           outfile << q(i,M,'e') << " -"  << z(i,M) << " 0\n";
           outfile << " -" << q(i,M,'e') << " " << z(i,M) << " 0\n";
+          N_CLAUSES += 2;
         } // upper border
         else if (i == 1) {
           outfile << q(i,j,'n') << " -"  << z(1,j) << " 0\n";
           outfile << " -" << q(i,j,'n') << " " << z(1,j) << " 0\n";
+          N_CLAUSES += 2;
         } // lower border
         else if (i == N){
           outfile << " " << q(N,j,'s') << " -"  << z(N,j) << " 0\n";
           outfile << " -" << q(N,j,'s') << " " << z(N,j) << " 0\n";
+          N_CLAUSES += 2;
         } // inner
         else {
 
@@ -181,29 +212,30 @@ int main(int argc, char ** argv) {
           outfile << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " -" << q(i,j,'s') << " -"<< q(i,j,'w') << " "<< z(i+1,j) << " 0\n";
           outfile << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " -" << q(i,j,'s') << " " << z(i-1,j) << " "<< z(i+1,j) << " 0\n";
           outfile << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " -" << q(i,j,'w') << " " << z(i,j-1) << " "<< z(i+1,j) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " " << z(i,j-1) << " " << z(i-1,j) << " "<< z(i+1,j) << " 0\n";
+          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " " <<  z(i,j-1)   << " " << z(i-1,j) << " "<< z(i+1,j) << " 0\n";
           outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " " << z(i,j+1) << " 0\n";
           outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'s') << " "  << z(i,j+1) << " "<< z(i-1,j) << " 0\n";
           outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'w') << " "  << z(i,j+1) << " "<< z(i,j-1) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " "  << z(i,j-1)    << " "<< z(i,j+1) << " "<< z(i-1,j)<< " 0\n";
+          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " "  << z(i,j-1)   << " "<< z(i,j+1) << " "<< z(i-1,j)<< " 0\n";
           outfile << " -" <<  z(i,j) << " -"  << q(i,j,'s') << " -" << q(i,j,'w') << " " << z(i,j+1) << " "<< z(i+1,j)<< " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'s') <<  " " << z(i,j+1) << " "<< z(i+1,j) << " " << z(i-1,j) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'w') <<  " " << z(i,j+1) << " "<< z(i+1,j) << " " << z(i,j-1) << " 0\n";
-          outfile << " -" <<  z(i,j) << " "   << z(i-1,j) <<  " " << z(i,j+1) << " "<< z(i+1,j) << " " << z(i,j-1) << " 0\n";
+          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'s') <<  " " << z(i,j+1)   << " "<< z(i+1,j) << " " << z(i-1,j) << " 0\n";
+          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'w') <<  " " << z(i,j+1)   << " "<< z(i+1,j) << " " << z(i,j-1) << " 0\n";
+          outfile << " -" <<  z(i,j) << " "   << z(i-1,j)   <<  " " << z(i,j+1)   << " "<< z(i+1,j) << " " << z(i,j-1) << " 0\n";
 
           // p v !q
           outfile << " " <<  z(i,j) << " " << q(i,j,'n') <<  " -" << z(i,j+1) << " 0\n"; // CHECK
           outfile << " " <<  z(i,j) << " " << q(i,j,'e') <<  " -" << z(i+1,j) << " 0\n";
           outfile << " " <<  z(i,j) << " " << q(i,j,'s') <<  " -" << z(i,j-1) << " 0\n";
           outfile << " " <<  z(i,j) << " " << q(i,j,'w') <<  " -" << z(i-1,j) << " 0\n";
+          N_CLAUSES += 20;
         }
 
-        // set the type 3 clauses
+        // CHECK FOR TYPE 3 CLAUSES
         outfile << "c TYPE 3 CLAUSES: for (i,j) = (" << i << "," << j << "):\n";
 
-        // Check for type 3 clauses
         // Every box can reach itself
         outfile << r(i,j,i,j) << " 0\n";
+        N_CLAUSES += 1;
 
         for (int i_p = 1; i_p <= N; i_p++) {
           for (int j_p = 1; j_p <= M; j_p++) {
@@ -212,28 +244,33 @@ int main(int argc, char ** argv) {
               if (i_p + 1 < N) {
                 //bottom adjacent
                 outfile << " -"  << r(i,j,i_p,j_p) << " "  << q(i_p,j_p,'s') << " "  << r(i,j, i_p+1,j_p) << " 0\n";
+                N_CLAUSES += 1;
               } // every line except the first one
               if (i_p - 1 > 1) {
                 //top adjacent
                 outfile << " -"  << r(i,j, i_p,j_p) << " "  << q(i_p,j_p,'n') << " "  << r(i,j, i_p-1,j_p) << " 0\n";
+                N_CLAUSES += 1;
               } // every column except the first one
               if (j_p - 1 > 1) {
                 //left adjacent
                 outfile << " -"  << r(i,j, i_p,j_p) << " "  <<  q(i_p,j_p,'w') << " "  << r(i,j, i_p,j_p-1) <<  " 0\n";
+                N_CLAUSES += 1;
               } // every column except the last one
               if (j_p + 1 < M) {
                 //right adjacent
                 outfile << " -"  << r(i,j, i_p,j_p) << " "  <<  q(i_p,j_p,'e') << " "  << r(i,j, i_p, j_p+1) << " 0\n";
+                N_CLAUSES += 1;
               }
           }
         }
 
         // Check for type 4 clauses
-        // we iterate over every char
+        // we iterate over every box
         outfile << "c TYPE 4 CLAUSES: for (i,j) = (" << i << "," << j << "):\n";
         for (int i_p = 1; i_p <= N; i_p++) {
           for(int j_p = 1; j_p <=M; j_p++){
             outfile << z(i,j) << " " << z(i_p,j_p) << " " << r(i,j,i_p,j_p) << " 0\n";
+            N_CLAUSES += 1;
           }
         }
 
@@ -246,18 +283,22 @@ int main(int argc, char ** argv) {
     // upper-left corner
     outfile << " -" << q(1,1,'n') << " " << q(1,1,'w') << " 0\n";
     outfile << " -" << q(1,1,'w') << " " << q(1,1,'n') << " 0\n";
+    N_CLAUSES += 2;
 
     // upper-right corner
     outfile << " -" << q(1,M,'n') << " " << q(1,M,'e') << " 0\n";
     outfile << " -" << q(1,M,'e') << " " << q(1,M,'n') << " 0\n";
+    N_CLAUSES += 2;
 
     // lower-left corner
     outfile << " -" << q(N,1,'s') << " " << q(N,1,'w') << " 0\n";
     outfile << " -" << q(N,1,'w') << " " << q(N,1,'s') << " 0\n";
+    N_CLAUSES += 2;
 
     // lower-right corner
     outfile << " -" << q(N,M,'s') << " " << q(N,M,'e') << " 0\n";
     outfile << " -" << q(N,M,'e') << " " << q(N,M,'s') << " 0\n";
+    N_CLAUSES += 2;
 
     for (int i = 0; i <= N; i++) {
         for (int j = 0; j <= M; j++) {
@@ -267,6 +308,7 @@ int main(int argc, char ** argv) {
                 outfile << q(1,j,'n') << " -" << q(1,j+1,'n') << " " << q(1,j,'e') << " 0\n";
                 outfile << q(1,j,'n') << " " << q(1,j+1,'n') << " -" << q(1,j,'e') << " 0\n";
                 outfile << " -" << q(1,j,'n') << " -" << q(1,j+1,'n') << " -" << q(1,j,'e') << " 0\n";
+                N_CLAUSES += 4;
             }
 
             // lower border without corner
@@ -275,6 +317,7 @@ int main(int argc, char ** argv) {
                 outfile << q(N,j,'s') << " -" << q(N,j+1,'s') << " " << q(N,j,'e') << " 0\n";
                 outfile << q(N,j,'s') << " " << q(N,j+1,'s') << " -" << q(N,j,'e') << " 0\n";
                 outfile << " -" << q(N,j,'s') << " -" << q(N,j+1,'s') << " -" << q(N,j,'e') << " 0\n";
+                N_CLAUSES += 4;
             }
 
             // left border without corner
@@ -283,6 +326,7 @@ int main(int argc, char ** argv) {
                 outfile << q(i,1,'w') << " -" << q(i+1,1,'w') << " " << q(i,1,'s') << " 0\n";
                 outfile << q(i,1,'w') << " " << q(i+1,1,'w') << " -" << q(i,1,'s') << " 0\n";
                 outfile << " -" << q(i,1,'w') << " -" << q(i+1,1,'w') << " -" << q(i,1,'s') << " 0\n";
+                N_CLAUSES += 4;
             }
 
             // right border without corner
@@ -291,6 +335,7 @@ int main(int argc, char ** argv) {
                 outfile << q(i,M,'e') << " -" << q(i+1,M,'e') << " " << q(i,M,'s') << " 0\n";
                 outfile << q(i,M,'e') << " " << q(i+1,M,'e') << " -" << q(i,M,'s') << " 0\n";
                 outfile << " -" << q(i,M,'e') << " -" << q(i+1,M,'e') << " -" << q(i,M,'s') << " 0\n";
+                N_CLAUSES += 4;
             }
 
             // inside cases
@@ -315,15 +360,20 @@ int main(int argc, char ** argv) {
                 outfile << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'n') << " -" << q(i+1,j+1,'w') << " 0\n";
                 outfile << " -" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'e') << " 0\n";
                 outfile << " -" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'s') << " 0\n";
+                N_CLAUSES += 16;
             }
         }
     }
 
+    outfile << "p cnf "<< T_VARIABLES << " " << N_CLAUSES << "\n";
     outfile.close();
     // we excecute minisat and redirect the output to the file sat.log
     int status = system("./minisat/core/minisat clauses.cnf res.out >> sat.log");
     resfile = fopen("res.out","r");
 
+    N_INST++;
+
+    // we read the file with the results for extracting and formatting the answer
     char *  line_res = NULL;
     size_t  len_res = 0;
     ssize_t read_res;
@@ -331,12 +381,18 @@ int main(int argc, char ** argv) {
     read_res = getline(&line_res, &len_res, resfile);
     // means the problem is satisfiable
     if (line_res[0] == 'S') {
+      N_SAT++;
+
       answerfile << line;
       answerfile << N << " " << M << " ";
+
       // we read the line containing the answer
       read_res = getline(&line_res, &len_res, resfile);
       vector<string> answer = split(line_res, ' ');
 
+      // formatting the answer:
+      // first we separate the corresponding binary representations for
+      // both horizontal and vertical segments.
       string binary_horizontal = "";
       string binary_vertical   = "";
       for(int i = 0; i < T_SEG; i++) {
@@ -357,8 +413,9 @@ int main(int argc, char ** argv) {
         }
       }
 
-      vector<string> vector_horizontal;
-      vector<string> vector_vertical;
+      // then we separate those binary srings into two vectors.
+      vector<string> horizontal_vector;
+      vector<string> vertical_vector;
 
       int h_i = 0;
       int v_i = 0;
@@ -367,7 +424,7 @@ int main(int argc, char ** argv) {
         aux += binary_horizontal[i];
         h_i++;
         if (h_i == M) {
-          vector_horizontal.push_back(aux);
+          horizontal_vector.push_back(aux);
           aux = "";
           h_i = 0;
         }
@@ -377,29 +434,46 @@ int main(int argc, char ** argv) {
         aux += binary_vertical[i];
         v_i++;
         if (v_i == M + 1) {
-          vector_vertical.push_back(aux);
+          vertical_vector.push_back(aux);
           aux = "";
           v_i = 0;
         }
       }
 
+      // finaly, we mix the solution to match the one given as example
+      // (ROW SEGMENTS) (COLUMN SEGMENTS) (ROW SEGMENTS) ...
       string final_binary = "";
       for (int i = 0; i < N + 1; i++) {
-        final_binary += vector_horizontal[i];
+        final_binary += horizontal_vector[i];
         final_binary += " ";
         if (i < N) {
-          final_binary += vector_vertical[i];
+          final_binary += vertical_vector[i];
           final_binary += " ";
         }
       }
 
       answerfile << final_binary << '\n';
 
+    } // if it was unsatisfiable:
+    else {
+      N_UNSAT++;
+      answerfile << "UNSAT: ";
+      answerfile << line;
     }
   }
 
   answerfile.close();
-  int sis = system("rm *.out *.cnf");
+  int rem = system("rm *.out *.cnf");
+
+  // message for user
+  cout << "Done solving instances."<< "\n";
+  cout << "Answer is contained in output.txt"<< "\n";
+  cout << "--------------------------"<< "\n";
+  cout << "SUMMARY:";
+  cout << "Number of instances: "     << N_INST<< "\n";
+  cout << "Satisfiable Instances: "   << N_SAT<< "\n";
+  cout << "Unsatisfiable Instances: " << N_UNSAT<< "\n";
+  cout << "Minisat output for all instances can be found at sat.log"<< "\n";
 
   return 0;
 

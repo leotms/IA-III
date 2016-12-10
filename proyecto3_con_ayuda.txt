@@ -24,7 +24,7 @@ Solución
 --------
 
 Usted debe construir un programa eficiente que solucione instancias
-arbitrarias del juego utilizando un SAT solver, como por ejemplo, 
+arbitrarias del juego utilizando un SAT solver, como por ejemplo,
 Minisat, Picosat, o zchaff.
 
 La entrada al sistema será un archivo de instancias en donde cada
@@ -45,12 +45,12 @@ una etiqueta asignada, sino su etiqueta viene dado por dicho carácter.
 
 Para cada línea del archivo de entrada (i.e., instancia del juego),
 el archivo de salida debe contener dos líneas. La primera es la misma
-línea en el archivo de entrada que describe la instancia. La segunda 
+línea en el archivo de entrada que describe la instancia. La segunda
 indica cuales son los segmentos del retículado que definen la línea
 cerrada, simple y continua que satisface las restricciones impuestas
-por las etiquetas. Esta línea se especfíca indicando para cada 
+por las etiquetas. Esta línea se especfíca indicando para cada
 segmento de la retícula, con los símbolos 0 y 1, si dicho segmento
-pertenece o no a la solución. Los segmentos del retículado se 
+pertenece o no a la solución. Los segmentos del retículado se
 enumeran en orden comenzando por los segmentos horizontas en la
 primera fila, desde la esquina superior izquierda, seguidos de
 los segmentos verticales en la primera fila, luego los segmentos
@@ -130,7 +130,7 @@ Cláusulas tipo 2
 ----------------
 
 Una solución particiona las celdas en dos grupos: el grupo de celdas
-interiores al perímetro y el grupo de celdas exteriores. Debemos 
+interiores al perímetro y el grupo de celdas exteriores. Debemos
 identificar el tipo de cada celda en una solución. Para esto definimos
 símbolos z(c) para cada celda c=(i,j) que denotan cuando una celda es
 exterior (z(c)=TRUE) o interior (z(c)=FALSE). Las siguientes fórmulas
@@ -192,5 +192,3 @@ z(c) & z(c') => r(c,c')
 La teoría proposicional entonces la conforman todas las cláusulas de tipos
 0, 1, 2, 3 y 4. Para un juego de dimensión n = NxM, el número de cláusulas
 es O(n + n + n + n^2 + n^2) = O(n^2).
-
-
