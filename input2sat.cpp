@@ -6,9 +6,10 @@
 #include <vector>
 
 using namespace std;
-int n = 0;
-int m = 0;
+// global contants
+int N, M, T_SEG;
 
+//*****************************************************************************/
 // splits a line to separate its elemens into a vector
 void split(const string &s, char delim, vector<string> &elems) {
     stringstream ss;
@@ -24,30 +25,38 @@ vector<string> split(const string &s, char delim) {
     split(s, delim, elems);
     return elems;
 }
+//*****************************************************************************/
 
-// matches a box into an unique value depending on m and n
+// returns the value of the variable that represents a segment for point (i,j)
+int q(int i, int j, char side) {
+  int box = (i - 1)*M + j;
+  if (side == 'n'){
+    return box;
+  } else if (side == 's') {
+    return (i*M) + j;
+  } else if (side == 'w') {
+    return  N*(M + 1) + box + i -1;
+  } else if (side == 'e') {
+    return N*(M + 1) + box + i;
+  }
+}
+
+// matches a box into an unique value depending on i y j
 // for differing inner or outer perimeter box.
-int z(int casilla) {
-  return ((m*n) + m)*2 + casilla;
+int z(int i, int j) {
+  int box = (i - 1)*M + j;
+  return T_SEG + box;
 }
 
 // matches a box into a unique value depending on m and n
-// for stablishing reachability for casilla1 to casilla2
-int r(int casilla1, int casilla2) {
-  return ((m*n) + m)*2 + m*n + (casilla1 - 1)*m*n + casilla2;
+// for stablishing reachability for box c and box c'
+int r(int ci, int cj, int cpi, int cpj) {
+  int box_c  = (ci - 1)*M + cj;
+  int box_cp = (cpi - 1)*M + cpj;
+  int box = (box_c - 1)*M*N + box_cp;
+  return (N*M) + T_SEG + box;
 }
 
-int border(int casilla, int line, char side) {
-  if (side == 'n'){
-    return casilla;
-  } else if (side == 's') {
-    return casilla + m;
-  } else if (side == 'w') {
-    return (n*m + m) + casilla + line;
-  } else if (side == 'e') {
-    return (n*m + m) + casilla + line + 1;
-  }
-}
 
 int main(int argc, char ** argv) {
 
@@ -64,207 +73,244 @@ int main(int argc, char ** argv) {
   while ((read = getline(&line, &len, inputfile)) != -1) {
     cout << "c " << line;
 
-    vector<string> informacion = split(line, ' ');
+    vector<string> info = split(line, ' ');
 
-    n = stoi(informacion[0]);
-    m = stoi(informacion[1]);
-    vector<string> valores(informacion.end() - n, informacion.end());
+    N = stoi(info[0]);
+    M = stoi(info[1]);
 
-    int num_casillas = n*m;
+    // number of vertical segments + horizontal segments
+    T_SEG = (N+1)*M + (M+1)*N;
 
-    int nvariables = (num_casillas + m) * 2;
-    cout << "c N : "<< n << "M : " << m << "\n";
-    cout << "p cnf " << nvariables << " 0\n";
+    // we extract the info from the line
+    vector<string> values(info.end() - N, info.end());
 
-    int casilla  = 1;
+    // we calculate the number of variables including T_SEG, Z and R.
+    int T_VARIABLES = N*N*M*M + N*M + (T_SEG);
 
-    // set the type 0 clauses
-    // for(int i = 0; i < n; i++){
-    //   string fila = valores[i];
-    //   for( int j = 0; j < m; j++) {
-    //     cout << "c C" << casilla << ": "<< fila[j] << "\n";
-    //     int n_casilla = (casilla - 1)*3 + casilla;
-    //     int e_casilla = n_casilla + 1;
-    //     int s_casilla = n_casilla + 2;
-    //     int w_casilla = n_casilla + 3;
-    //     if ((j <= m - 2)) {
-    //       // cout << "condicion pared para la casilla C" << casilla << " \n";
-    //       int casilla_lat   = casilla + 1;
-    //       int n_casilla_lat = (casilla_lat - 1)*3 + casilla_lat;
-    //       int w_casilla_lat = n_casilla_lat + 3;
-    //       // restriccion:
-    //       cout << "-" << e_casilla << " " << w_casilla_lat << " 0 ";
-    //       cout << e_casilla << " -" << w_casilla_lat << " 0\n" ;
-    //     }
-    //     if (i <= n - 2) {
-    //       int casilla_inf   = casilla + m;
-    //       int n_casilla_inf = (casilla_inf - 1)*3 + casilla_inf;
-    //
-    //       cout << "-" << s_casilla << " " << n_casilla_inf << " 0 ";
-    //       cout << s_casilla << " -" << n_casilla_inf << " 0\n" ;
-    //     }
-    //     casilla++;
-    //   }
-    // }
+    cout << "c N : "<< N << "M : " << M << "\n";
+    // header for the cnf file
+    cout << "p cnf " << T_VARIABLES << " 0\n";
 
-    casilla  = 1;
-
-    for(int i = 0; i < n; i++){
-      string fila = valores[i];
-      for( int j = 0; j < m; j++) {
-        cout << "c C" << casilla << ": "<< fila[j] << "\n";
-
+    for(int i = 1; i <= N; i++){
+      string row = values[i-1];
+      for( int j = 1; j <= M; j++) {
 
         // CHECK FOR TYPE 1 CLAUSES
-        cout << "c TYPE 1 CLAUSES\n";
+        cout << "c TYPE 1 CLAUSES: for (i,j) = (" << i << "," << j << "):\n";
 
-        // check for the number of the segments for the cell
-        int n_casilla = casilla;
-        int w_casilla = (num_casillas + m) + casilla + i;
-        int s_casilla = n_casilla + m;
-        int e_casilla = w_casilla + 1;
-        
         // the box has no segments
-        if (fila[j] =='0'){
-          cout << " -" << n_casilla << " 0\n";
-          cout << " -" << s_casilla << " 0\n";
-          cout << " -" << e_casilla << " 0\n";
-          cout << " -" << w_casilla << " 0\n";
+        if (row[j-1] =='0'){
+          cout << " -" << q(i,j,'n') << " 0\n";
+          cout << " -" << q(i,j,'s') << " 0\n";
+          cout << " -" << q(i,j,'e') << " 0\n";
+          cout << " -" << q(i,j,'w') << " 0\n";
         } // the box has only one segment
-        else if (fila[j] =='1'){
-          cout << n_casilla << " " << e_casilla << " " << s_casilla << " " << w_casilla << " 0\n";
-          cout << "-" << s_casilla << " -" << w_casilla << " 0\n";
-          cout << "-" << e_casilla << " -" << s_casilla << " 0\n";
-          cout << "-" << n_casilla << " -" << w_casilla << " 0\n";
-          cout << "-" << n_casilla << " -" << e_casilla << " 0\n";
-          cout << "-" << n_casilla << " -" << s_casilla << " 0\n";
-          cout << "-" << e_casilla << " -" << w_casilla << " 0\n";
+        else if (row[j-1] =='1'){
+          cout << q(i,j,'n') << " " << q(i,j,'e') << " " << q(i,j,'s') << " " << q(i,j,'w') << " 0\n";
+          cout << "-" << q(i,j,'s') << " -" << q(i,j,'w') << " 0\n";
+          cout << "-" << q(i,j,'e') << " -" << q(i,j,'s') << " 0\n";
+          cout << "-" << q(i,j,'n') << " -" << q(i,j,'w') << " 0\n";
+          cout << "-" << q(i,j,'n') << " -" << q(i,j,'e') << " 0\n";
+          cout << "-" << q(i,j,'n') << " -" << q(i,j,'s') << " 0\n";
+          cout << "-" << q(i,j,'e') << " -" << q(i,j,'w') << " 0\n";
         } // the box has two segments
-        else if (fila[j] =='2'){
-          cout << " -" << n_casilla << " -" << e_casilla << " -" << s_casilla << " -" << w_casilla << " 0\n";
-          cout << "-" << n_casilla << " -" << s_casilla << " -" << e_casilla << " 0\n";
-          cout << "-" << n_casilla << " -" << s_casilla << " -" << w_casilla << " 0\n";
-          cout << w_casilla << " " << e_casilla << " " << s_casilla << " 0\n";
-          cout << w_casilla << " " << e_casilla << " " << n_casilla << " 0\n";
-          cout << "-" << n_casilla << " -" << w_casilla << " -" << e_casilla << " 0\n";
-          cout << n_casilla << " " << e_casilla << " " << s_casilla << " 0\n";
-          cout << w_casilla << " " << n_casilla << " " << s_casilla << " 0\n";
-          cout << "-" << s_casilla << " -" << w_casilla << " -" << e_casilla << " 0\n";
-          cout << w_casilla << " " << n_casilla << " " << e_casilla << " 0\n";
+        else if (row[j-1] =='2'){
+          cout << " -" << q(i,j,'n') << " -" << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " 0\n";
+          cout << "-" << q(i,j,'n') << " -" << q(i,j,'s') << " -" << q(i,j,'e') << " 0\n";
+          cout << "-" << q(i,j,'n') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " 0\n";
+          cout << q(i,j,'w') << " " << q(i,j,'e') << " " << q(i,j,'s') << " 0\n";
+          cout << q(i,j,'w') << " " << q(i,j,'e') << " " << q(i,j,'n') << " 0\n";
+          cout << "-" << q(i,j,'n') << " -" << q(i,j,'w') << " -" << q(i,j,'e') << " 0\n";
+          cout << q(i,j,'n') << " " << q(i,j,'e') << " " << q(i,j,'s') << " 0\n";
+          cout << q(i,j,'w') << " " << q(i,j,'n') << " " << q(i,j,'s') << " 0\n";
+          cout << "-" << q(i,j,'s') << " -" << q(i,j,'w') << " -" << q(i,j,'e') << " 0\n";
+          cout << q(i,j,'w') << " " << q(i,j,'n') << " " << q(i,j,'e') << " 0\n";
 
         } // the box has three segments
-        else if (fila[j] =='3'){
-          cout << " -" << n_casilla << " -" << e_casilla << " -" << s_casilla << " -" << w_casilla << " 0\n";
-          cout << n_casilla << " " << s_casilla << " 0\n";
-          cout << n_casilla << " " << e_casilla << " 0\n";
-          cout << n_casilla << " " << w_casilla << " 0\n";
-          cout << s_casilla << " " << e_casilla << " 0\n";
-          cout << s_casilla << " " << w_casilla << " 0\n";
-          cout << w_casilla << " " << e_casilla << " 0\n";
+        else if (row[j-1] =='3'){
+          cout << " -" << q(i,j,'n') << " -" << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " 0\n";
+          cout << q(i,j,'n') << " " << q(i,j,'s') << " 0\n";
+          cout << q(i,j,'n') << " " << q(i,j,'e') << " 0\n";
+          cout << q(i,j,'n') << " " << q(i,j,'w') << " 0\n";
+          cout << q(i,j,'s') << " " << q(i,j,'e') << " 0\n";
+          cout << q(i,j,'s') << " " << q(i,j,'w') << " 0\n";
+          cout << q(i,j,'w') << " " << q(i,j,'e') << " 0\n";
 
         } // the box has all four segments
-        else if (fila[j] =='4'){
-          cout << n_casilla << " 0\n";
-          cout << s_casilla << " 0\n";
-          cout << e_casilla << " 0\n";
-          cout << w_casilla << " 0\n";
+        else if (row[j-1] =='4'){
+          cout << q(i,j,'n') << " 0\n";
+          cout << q(i,j,'s') << " 0\n";
+          cout << q(i,j,'e') << " 0\n";
+          cout << q(i,j,'w') << " 0\n";
         }
 
-        // Check for type 2 clauses
+        // CHECK FOR TYPE 2 CLAUSES
+        cout << "c TYPE 2 CLAUSES: for (i,j) = (" << i << "," << j << "):\n";
         // left border
-        cout << "c TYPE 2 CLAUSES\n";
-        if (j == 0) {
-          cout << " -" << w_casilla << " "  << z(casilla) << " 0\n";
-          cout << " -" << w_casilla << " -" << z(casilla) << " 0\n";
+        if (j == 1) {
+          cout << q(i,1,'w') << " -"  << z(i,1) << " 0\n";
+          cout << " -" << q(i,1,'w') << " " << z(i,1) << " 0\n";
         } // right border
-        else if (j == m - 1) {
-          cout << " -" << e_casilla << " "  << z(casilla) << " 0\n";
-          cout << " -" << e_casilla << " -" << z(casilla) << " 0\n";
+        else if (j == N) {
+          cout << q(i,M,'e') << " -"  << z(i,M) << " 0\n";
+          cout << " -" << q(i,M,'e') << " " << z(i,M) << " 0\n";
         } // upper border
-        else if (i == 0) {
-          cout << " -" << s_casilla << " "  << z(casilla) << " 0\n";
-          cout << " -" << s_casilla << " -" << z(casilla) << " 0\n";
+        else if (i == 1) {
+          cout << q(i,j,'n') << " -"  << z(1,j) << " 0\n";
+          cout << " -" << q(i,j,'n') << " " << z(1,j) << " 0\n";
         } // lower border
-        else if (i == n -1 ){
-          cout << " -" << n_casilla << " "  << z(casilla) << " 0\n";
-          cout << " -" << n_casilla << " -" << z(casilla) << " 0\n";
+        else if (i == N){
+          cout << " " << q(N,j,'s') << " -"  << z(N,j) << " 0\n";
+          cout << " -" << q(N,j,'s') << " " << z(N,j) << " 0\n";
         } // inner
         else {
 
           // CNF CLAUSE
           // !p v q
-          cout << " -" <<  z(casilla) << " -"  << e_casilla << " -" << n_casilla << " -"<< s_casilla << " -"<< w_casilla << " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << e_casilla << " -" << n_casilla << " -"<< s_casilla << " "<< z(casilla - 1) << " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << e_casilla << " -" << n_casilla << "  "<< z(casilla + m) << " -" << w_casilla << " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << e_casilla << " -" << n_casilla << " " << z(casilla + m)  << " " << z(casilla - 1) << " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << n_casilla << " -" << s_casilla << " -"<< w_casilla << " "<< z(casilla + 1) << " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << n_casilla << " -" << s_casilla << " " << z(casilla - 1 ) << " "<< z(casilla + 1) << " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << n_casilla << " -" << w_casilla << " " << z(casilla + m ) << " "<< z(casilla + 1) << " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << n_casilla << " " << z(casilla + m) << " " << z(casilla - 1 ) << " "<< z(casilla + 1) << " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << e_casilla << " -" << s_casilla << " -" << w_casilla << " " << z(casilla - m) << " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << e_casilla << " -" << s_casilla << " "  << z(casilla - m ) << " "<< z(casilla - 1) << " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << e_casilla << " -" << w_casilla << " "  << z(casilla - m ) << " "<< z(casilla + m) << " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << e_casilla << " "  << z(casilla + m )    << " "<< z(casilla - m) << " "<< z(casilla - 1)<< " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << s_casilla << " -" << w_casilla << " " << z(casilla - m) << " "<< z(casilla + 1)<< " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << s_casilla <<  " " << z(casilla - m) << " "<< z(casilla + 1) << " " << z(casilla - 1) << " 0\n";
-          cout << " -" <<  z(casilla) << " -"  << w_casilla <<  " " << z(casilla - m) << " "<< z(casilla + 1) << " " << z(casilla + m) << " 0\n";
-          cout << " -" <<  z(casilla) << " "   << z(casilla - 1) <<  " " << z(casilla - m) << " "<< z(casilla + 1) << " " << z(casilla + m) << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'n') << " -"<< q(i,j,'s') << " -"<< q(i,j,'w') << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'n') << " -"<< q(i,j,'s') << " "<< z(i-1,j) << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'n') << "  "<< z(i,j-1) << " -" << q(i,j,'w') << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'n') << " " << z(i,j-1)  << " " << z(i-1,j) << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " -" << q(i,j,'s') << " -"<< q(i,j,'w') << " "<< z(i+1,j) << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " -" << q(i,j,'s') << " " << z(i-1,j) << " "<< z(i+1,j) << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " -" << q(i,j,'w') << " " << z(i,j-1) << " "<< z(i+1,j) << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " " << z(i,j-1) << " " << z(i-1,j) << " "<< z(i+1,j) << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " " << z(i,j+1) << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'s') << " "  << z(i,j+1) << " "<< z(i-1,j) << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'w') << " "  << z(i,j+1) << " "<< z(i,j-1) << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " "  << z(i,j-1)    << " "<< z(i,j+1) << " "<< z(i-1,j)<< " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'s') << " -" << q(i,j,'w') << " " << z(i,j+1) << " "<< z(i+1,j)<< " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'s') <<  " " << z(i,j+1) << " "<< z(i+1,j) << " " << z(i-1,j) << " 0\n";
+          cout << " -" <<  z(i,j) << " -"  << q(i,j,'w') <<  " " << z(i,j+1) << " "<< z(i+1,j) << " " << z(i,j-1) << " 0\n";
+          cout << " -" <<  z(i,j) << " "   << z(i-1,j) <<  " " << z(i,j+1) << " "<< z(i+1,j) << " " << z(i,j-1) << " 0\n";
 
           // p v !q
-          cout << " " <<  z(casilla) << " " << n_casilla <<  " -" << z(casilla - m) << " 0\n";
-          cout << " " <<  z(casilla) << " " << e_casilla <<  " -" << z(casilla + 1) << " 0\n";
-          cout << " " <<  z(casilla) << " " << s_casilla <<  " -" << z(casilla + m) << " 0\n";
-          cout << " " <<  z(casilla) << " " << w_casilla <<  " -" << z(casilla - 1) << " 0\n";
+          cout << " " <<  z(i,j) << " " << q(i,j,'n') <<  " -" << z(i,j+1) << " 0\n"; // CHECK
+          cout << " " <<  z(i,j) << " " << q(i,j,'e') <<  " -" << z(i+1,j) << " 0\n";
+          cout << " " <<  z(i,j) << " " << q(i,j,'s') <<  " -" << z(i,j-1) << " 0\n";
+          cout << " " <<  z(i,j) << " " << q(i,j,'w') <<  " -" << z(i-1,j) << " 0\n";
         }
 
         // set the type 3 clauses
-        cout << "c TYPE 3 CLAUSES\n";
+        cout << "c TYPE 3 CLAUSES: for (i,j) = (" << i << "," << j << "):\n";
 
         // Check for type 3 clauses
         // Every box can reach itself
-        cout << r(casilla, casilla) << " 0\n";
+        cout << r(i,j,i,j) << " 0\n";
 
-        int casilla_prima = 1;
-
-        for (int i_p = 0; i_p < n; i_p++) {
-          for (int j_p = 0; j_p < m; j_p++) {
-            if (casilla != casilla_prima) {
+        for (int i_p = 1; i_p <= N; i_p++) {
+          for (int j_p = 1; j_p <= M; j_p++) {
               // check adjacent boxes for the corners
               // every line except the last one
-              if (i_p < n - 1) {
+              if (i_p + 1 < N) {
                 //bottom adjacent
-                cout << " -"  << r(casilla, casilla_prima) << " "  << border(casilla_prima, i_p, 's') << " "  << r(casilla, casilla_prima + m) << " 0\n";
+                cout << " -"  << r(i,j,i_p,j_p) << " "  << q(i_p,j_p,'s') << " "  << r(i,j, i_p+1,j_p) << " 0\n";
               } // every line except the first one
-              if (i_p >= 1) {
+              if (i_p - 1 > 1) {
                 //top adjacent
-                cout << " -"  << r(casilla, casilla_prima) << " "  << border(casilla_prima, i_p, 'n') << " "  << r(casilla, casilla_prima - m) << " 0\n";
+                cout << " -"  << r(i,j, i_p,j_p) << " "  << q(i_p,j_p,'n') << " "  << r(i,j, i_p-1,j_p) << " 0\n";
               } // every column except the first one
-              if (j_p >= 1) {
+              if (j_p - 1 > 1) {
                 //left adjacent
-                cout << " -"  << r(casilla, casilla_prima) << " "  << border(casilla_prima, i_p, 'w') << " "  << r(casilla, casilla_prima - 1) <<  " 0\n";
+                cout << " -"  << r(i,j, i_p,j_p) << " "  <<  q(i_p,j_p,'w') << " "  << r(i,j, i_p,j_p-1) <<  " 0\n";
               } // every column except the last one
-              if (j_p < m - 1) {
+              if (j_p + 1 < M) {
                 //right adjacent
-                cout << " -"  << r(casilla, casilla_prima) << " "  << border(casilla_prima, i_p, 'e') << " "  << r(casilla, casilla_prima + 1) << " 0\n";
+                cout << " -"  << r(i,j, i_p,j_p) << " "  <<  q(i_p,j_p,'e') << " "  << r(i,j, i_p, j_p+1) << " 0\n";
               }
-            }
-            casilla_prima++;
           }
         }
 
         // Check for type 4 clauses
         // we iterate over every char
-        cout << "c TYPE 4 CLAUSES\n";
-        for (int casilla_aux = 1; casilla_aux <= num_casillas; casilla_aux++) {
-          // if (casilla != casilla_aux) {
-            cout << " -"  << z(casilla) << " -"  << z(casilla_aux) << " "  << r(casilla, casilla_aux) << " 0\n";
-          // }
+        cout << "c TYPE 4 CLAUSES: for (i,j) = (" << i << "," << j << "):\n";
+        for (int i_p = 1; i_p <= N; i_p++) {
+          for(int j_p = 1; j_p <=M; j_p++){
+            cout << z(i,j) << " " << z(i_p,j_p) << " " << r(i,j,i_p,j_p) << " 0\n";
+          }
         }
 
-        casilla++;
       }
     }
 
+    // OTHER CLAUSES
+
+    // makes restrictions for adjacency of segments
+    // upper-left corner
+    cout << " -" << q(1,1,'n') << " " << q(1,1,'w') << " 0\n";
+    cout << " -" << q(1,1,'w') << " " << q(1,1,'n') << " 0\n";
+
+    // upper-right corner
+    cout << " -" << q(1,M,'n') << " " << q(1,M,'e') << " 0\n";
+    cout << " -" << q(1,M,'e') << " " << q(1,M,'n') << " 0\n";
+
+    // lower-left corner
+    cout << " -" << q(N,1,'s') << " " << q(N,1,'w') << " 0\n";
+    cout << " -" << q(N,1,'w') << " " << q(N,1,'s') << " 0\n";
+
+    // lower-right corner
+    cout << " -" << q(N,M,'s') << " " << q(N,M,'e') << " 0\n";
+    cout << " -" << q(N,M,'e') << " " << q(N,M,'s') << " 0\n";
+
+    for (int i = 0; i <= N; i++) {
+        for (int j = 0; j <= M; j++) {
+            // upper border without corner
+            if (i == 0 && j != 0 && j != M) {
+                cout << " -" << q(1,j,'n') << " " << q(1,j+1,'n') << " " << q(1,j,'e') << " 0\n";
+                cout << q(1,j,'n') << " -" << q(1,j+1,'n') << " " << q(1,j,'e') << " 0\n";
+                cout << q(1,j,'n') << " " << q(1,j+1,'n') << " -" << q(1,j,'e') << " 0\n";
+                cout << " -" << q(1,j,'n') << " -" << q(1,j+1,'n') << " -" << q(1,j,'e') << " 0\n";
+            }
+
+            // lower border without corner
+            else if (i == N && j != 0 && j != M)s {
+                cout << " -" << q(N,j,'s') << " " << q(N,j+1,'s') << " " << q(N,j,'e') << " 0\n";
+                cout << q(N,j,'s') << " -" << q(N,j+1,'s') << " " << q(N,j,'e') << " 0\n";
+                cout << q(N,j,'s') << " " << q(N,j+1,'s') << " -" << q(N,j,'e') << " 0\n";
+                cout << " -" << q(N,j,'s') << " -" << q(N,j+1,'s') << " -" << q(N,j,'e') << " 0\n";
+            }
+
+            // left border without corner
+            if (j == 0 && i != 0 && i != N ){
+                cout << " -" << q(i,1,'w') << " " << q(i+1,1,'w') << " " << q(i,1,'s') << " 0\n";
+                cout << q(i,1,'w') << " -" << q(i+1,1,'w') << " " << q(i,1,'s') << " 0\n";
+                cout << q(i,1,'w') << " " << q(i+1,1,'w') << " -" << q(i,1,'s') << " 0\n";
+                cout << " -" << q(i,1,'w') << " -" << q(i+1,1,'w') << " -" << q(i,1,'s') << " 0\n";
+            }
+
+            // right border without corner
+            else if (j == M  && i != 0 && i != N){
+                cout << " -" << q(i,M,'e') << " " << q(i+1,M,'e') << " " << q(i,M,'s') << " 0\n";
+                cout << q(i,M,'e') << " -" << q(i+1,M,'e') << " " << q(i,M,'s') << " 0\n";
+                cout << q(i,M,'e') << " " << q(i+1,M,'e') << " -" << q(i,M,'s') << " 0\n";
+                cout << " -" << q(i,M,'e') << " -" << q(i+1,M,'e') << " -" << q(i,M,'s') << " 0\n";
+            }
+
+            // inside cases
+            if (i > 0 && i < N && j > 0 && j < M) {
+
+                // when a segment is adjacent to (i,j), there is another segment adjacent to (i,j)
+                cout << " -" << q(i,j,'e') << " " << q(i,j,'s') << " " << q(i+1,j+1,'w') << " " << q(i+1,j+1,'n') << " 0\n";
+                cout << q(i,j,'e') << " -" << q(i,j,'s') << " " << q(i+1,j+1,'w') << " " << q(i+1,j+1,'n') << " 0\n";
+                cout << q(i,j,'e') << " " << q(i,j,'s') << " -" << q(i+1,j+1,'w') << " " << q(i+1,j+1,'n') << " 0\n";
+                cout << q(i,j,'e') << " " << q(i,j,'s') << " " << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " 0\n";
+
+                // there are only two adjacent segments for (i,j)
+                cout << " -" << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'w') << " 0\n";
+                cout << " -" << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'n') << " 0\n";
+                cout << " -" << q(i,j,'e') << " -" << q(i+1,j+1,'w') << " -" << q(i,j,'s')  << " 0\n";
+                cout << " -" << q(i,j,'e') << " -" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " 0\n";
+                cout << " -" << q(i,j,'e') << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'s') << " 0\n";
+                cout << " -" << q(i,j,'e') << " -" << q(i+1,j+1,'n') << " -" << q(i+1,j+1,'w')  << " 0\n";
+                cout << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'w') << " -" << q(i,j,'e') << " 0\n";
+                cout << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " 0\n";
+                cout << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'e') << " 0\n";
+                cout << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'n') << " -" << q(i+1,j+1,'w') << " 0\n";
+                cout << " -" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'e') << " 0\n";
+                cout << " -" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'s') << " 0\n";
+            }
+        }
+    }
 
   }
 
