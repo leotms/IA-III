@@ -37,6 +37,18 @@ int r(int casilla1, int casilla2) {
   return ((m*n) + m)*2 + m*n + (casilla1 - 1)*m*n + casilla2;
 }
 
+int border(int casilla, int line, char side) {
+  if (side == 'n'){
+    return casilla;
+  } else if (side == 's') {
+    return casilla + m;
+  } else if (side == 'w') {
+    return (n*m + m) + casilla + line;
+  } else if (side == 'e') {
+    return (n*m + m) + casilla + line + 1;
+  }
+}
+
 int main(int argc, char ** argv) {
 
   FILE * inputfile;
@@ -58,7 +70,9 @@ int main(int argc, char ** argv) {
     m = stoi(informacion[1]);
     vector<string> valores(informacion.end() - n, informacion.end());
 
-    int nvariables = (m*n + m) * 2;
+    int num_casillas = n*m;
+
+    int nvariables = (num_casillas + m) * 2;
     cout << "c N : "<< n << "M : " << m << "\n";
     cout << "p cnf " << nvariables << " 0\n";
 
@@ -95,22 +109,21 @@ int main(int argc, char ** argv) {
 
     casilla  = 1;
 
-    // set the type 1 clauses
-    cout << "c TYPE 1 CLAUSES\n";
-
     for(int i = 0; i < n; i++){
       string fila = valores[i];
       for( int j = 0; j < m; j++) {
         cout << "c C" << casilla << ": "<< fila[j] << "\n";
 
+
+        // CHECK FOR TYPE 1 CLAUSES
+        cout << "c TYPE 1 CLAUSES\n";
+
         // check for the number of the segments for the cell
         int n_casilla = casilla;
-        int w_casilla = (n*m + m) + casilla + i;
+        int w_casilla = (num_casillas + m) + casilla + i;
         int s_casilla = n_casilla + m;
         int e_casilla = w_casilla + 1;
-
-        // check for type 1 clauses
-
+        
         // the box has no segments
         if (fila[j] =='0'){
           cout << " -" << n_casilla << " 0\n";
@@ -159,6 +172,7 @@ int main(int argc, char ** argv) {
 
         // Check for type 2 clauses
         // left border
+        cout << "c TYPE 2 CLAUSES\n";
         if (j == 0) {
           cout << " -" << w_casilla << " "  << z(casilla) << " 0\n";
           cout << " -" << w_casilla << " -" << z(casilla) << " 0\n";
@@ -203,21 +217,55 @@ int main(int argc, char ** argv) {
           cout << " " <<  z(casilla) << " " << w_casilla <<  " -" << z(casilla - 1) << " 0\n";
         }
 
+        // set the type 3 clauses
+        cout << "c TYPE 3 CLAUSES\n";
+
+        // Check for type 3 clauses
+        // Every box can reach itself
+        cout << r(casilla, casilla) << " 0\n";
+
+        int casilla_prima = 1;
+
+        for (int i_p = 0; i_p < n; i_p++) {
+          for (int j_p = 0; j_p < m; j_p++) {
+            if (casilla != casilla_prima) {
+              // check adjacent boxes for the corners
+              // every line except the last one
+              if (i_p < n - 1) {
+                //bottom adjacent
+                cout << " -"  << r(casilla, casilla_prima) << " "  << border(casilla_prima, i_p, 's') << " "  << r(casilla, casilla_prima + m) << " 0\n";
+              } // every line except the first one
+              if (i_p >= 1) {
+                //top adjacent
+                cout << " -"  << r(casilla, casilla_prima) << " "  << border(casilla_prima, i_p, 'n') << " "  << r(casilla, casilla_prima - m) << " 0\n";
+              } // every column except the first one
+              if (j_p >= 1) {
+                //left adjacent
+                cout << " -"  << r(casilla, casilla_prima) << " "  << border(casilla_prima, i_p, 'w') << " "  << r(casilla, casilla_prima - 1) <<  " 0\n";
+              } // every column except the last one
+              if (j_p < m - 1) {
+                //right adjacent
+                cout << " -"  << r(casilla, casilla_prima) << " "  << border(casilla_prima, i_p, 'e') << " "  << r(casilla, casilla_prima + 1) << " 0\n";
+              }
+            }
+            casilla_prima++;
+          }
+        }
+
+        // Check for type 4 clauses
+        // we iterate over every char
+        cout << "c TYPE 4 CLAUSES\n";
+        for (int casilla_aux = 1; casilla_aux <= num_casillas; casilla_aux++) {
+          // if (casilla != casilla_aux) {
+            cout << " -"  << z(casilla) << " -"  << z(casilla_aux) << " "  << r(casilla, casilla_aux) << " 0\n";
+          // }
+        }
+
         casilla++;
       }
     }
 
-    // // set the type 1 clauses
-    // cout << "c TYPE 3 CLAUSES\n";
-    //
-    // // Check for type 3 clauses
-    // // Every box can reach itself
-    //
-    // for (int casilla1 = 1; casilla1 <= n*m; casilla1++){
-    //   for(int casilla2 = 1; casilla2 <= n*m; casilla2++){
-    //     cout << r(casilla1, casilla2) << '\n';
-    //   }
-    // }
+
   }
 
 
