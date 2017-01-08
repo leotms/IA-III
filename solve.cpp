@@ -131,10 +131,10 @@ int main(int argc, char ** argv) {
 
         // the box has no segments
         if (row[j-1] =='0'){
-          outfile << " -" << q(i,j,'n') << " 0\n";
-          outfile << " -" << q(i,j,'s') << " 0\n";
-          outfile << " -" << q(i,j,'e') << " 0\n";
-          outfile << " -" << q(i,j,'w') << " 0\n";
+          outfile << "-" << q(i,j,'n') << " 0\n";
+          outfile << "-" << q(i,j,'s') << " 0\n";
+          outfile << "-" << q(i,j,'e') << " 0\n";
+          outfile << "-" << q(i,j,'w') << " 0\n";
           N_CLAUSES += 4;
         } // the box has only one segment
         else if (row[j-1] =='1'){
@@ -148,26 +148,33 @@ int main(int argc, char ** argv) {
           N_CLAUSES += 7;
         } // the box has two segments
         else if (row[j-1] =='2'){
-          outfile << " -" << q(i,j,'n') << " -" << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " 0\n";
+          outfile << "-" << q(i,j,'n') << " -" << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " 0\n";
+          // when north and south segments are true
           outfile << "-" << q(i,j,'n') << " -" << q(i,j,'s') << " -" << q(i,j,'e') << " 0\n";
           outfile << "-" << q(i,j,'n') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " 0\n";
-          outfile << q(i,j,'w') << " " << q(i,j,'e') << " " << q(i,j,'s') << " 0\n";
-          outfile << q(i,j,'w') << " " << q(i,j,'e') << " " << q(i,j,'n') << " 0\n";
+          outfile <<        q(i,j,'w') << " "  << q(i,j,'e') << " "  << q(i,j,'s') << " 0\n";
+          outfile <<        q(i,j,'w') << " "  << q(i,j,'e') << " "  << q(i,j,'n') << " 0\n";
+          // when nort and west segments are true
           outfile << "-" << q(i,j,'n') << " -" << q(i,j,'w') << " -" << q(i,j,'e') << " 0\n";
-          outfile << q(i,j,'n') << " " << q(i,j,'e') << " " << q(i,j,'s') << " 0\n";
-          outfile << q(i,j,'w') << " " << q(i,j,'n') << " " << q(i,j,'s') << " 0\n";
+          outfile <<        q(i,j,'n') << " "  << q(i,j,'e') << " "  << q(i,j,'s') << " 0\n";
+          // when nort and east segments are true
+          outfile <<        q(i,j,'w') << " "  << q(i,j,'n') << " "  << q(i,j,'s') << " 0\n";
+          // when south and west segments are true
           outfile << "-" << q(i,j,'s') << " -" << q(i,j,'w') << " -" << q(i,j,'e') << " 0\n";
-          outfile << q(i,j,'w') << " " << q(i,j,'n') << " " << q(i,j,'e') << " 0\n";
+          outfile <<        q(i,j,'w') << " "  << q(i,j,'n') << " "  << q(i,j,'e') << " 0\n";
           N_CLAUSES += 10;
         } // the box has three segments
         else if (row[j-1] =='3'){
-          outfile << " -" << q(i,j,'n') << " -" << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " 0\n";
-          outfile << q(i,j,'n') << " " << q(i,j,'s') << " 0\n";
-          outfile << q(i,j,'n') << " " << q(i,j,'e') << " 0\n";
-          outfile << q(i,j,'n') << " " << q(i,j,'w') << " 0\n";
-          outfile << q(i,j,'s') << " " << q(i,j,'e') << " 0\n";
-          outfile << q(i,j,'s') << " " << q(i,j,'w') << " 0\n";
+          outfile << "-" << q(i,j,'n') << " -" << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " 0\n";
+          // when nort, south and west segments are true
           outfile << q(i,j,'w') << " " << q(i,j,'e') << " 0\n";
+          outfile << q(i,j,'s') << " " << q(i,j,'e') << " 0\n";
+          outfile << q(i,j,'n') << " " << q(i,j,'e') << " 0\n";
+          // north, south and west segments are true
+          outfile << q(i,j,'n') << " " << q(i,j,'w') << " 0\n";
+          outfile << q(i,j,'s') << " " << q(i,j,'w') << " 0\n";
+          // north, south and west segments are true
+          outfile << q(i,j,'n') << " " << q(i,j,'s') << " 0\n";
           N_CLAUSES += 7;
         } // the box has all four segments
         else if (row[j-1] =='4'){
@@ -180,53 +187,52 @@ int main(int argc, char ** argv) {
 
         // CHECK FOR TYPE 2 CLAUSES
         outfile << "c TYPE 2 CLAUSES: for (i,j) = (" << i << "," << j << "):\n";
-        // left border
+        // left border of the board
         if (j == 1) {
-          outfile << q(i,1,'w') << " -"  << z(i,1) << " 0\n";
-          outfile << " -" << q(i,1,'w') << " " << z(i,1) << " 0\n";
+          outfile <<         q(i,1,'w') << " -" << z(i,1) << " 0\n";
+          outfile << "-"  << q(i,1,'w') << " "  << z(i,1) << " 0\n";
           N_CLAUSES += 2;
-        } // right border
+        } // right border of the board
         else if (j == N) {
-          outfile << q(i,M,'e') << " -"  << z(i,M) << " 0\n";
-          outfile << " -" << q(i,M,'e') << " " << z(i,M) << " 0\n";
+          outfile <<         q(i,M,'e') << " -" << z(i,M) << " 0\n";
+          outfile << "-"  << q(i,M,'e') << " "  << z(i,M) << " 0\n";
           N_CLAUSES += 2;
-        } // upper border
+        } // upper border of the board
         else if (i == 1) {
-          outfile << q(i,j,'n') << " -"  << z(1,j) << " 0\n";
-          outfile << " -" << q(i,j,'n') << " " << z(1,j) << " 0\n";
+          outfile         << q(i,j,'n') << " -" << z(1,j) << " 0\n";
+          outfile << "-"  << q(i,j,'n') << " "  << z(1,j) << " 0\n";
           N_CLAUSES += 2;
-        } // lower border
+        } // lower border of the board
         else if (i == N){
-          outfile << " " << q(N,j,'s') << " -"  << z(N,j) << " 0\n";
-          outfile << " -" << q(N,j,'s') << " " << z(N,j) << " 0\n";
+          outfile <<         q(N,j,'s') << " -" << z(N,j) << " 0\n";
+          outfile << "-"  << q(N,j,'s') << " "  << z(N,j) << " 0\n";
           N_CLAUSES += 2;
-        } // inner
+        } // all the non-border boxes of the board
         else {
 
-          // CNF CLAUSE
-          // !p v q
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'n') << " -"<< q(i,j,'s') << " -"<< q(i,j,'w') << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'n') << " -"<< q(i,j,'s') << " "<< z(i-1,j) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'n') << "  "<< z(i,j-1) << " -" << q(i,j,'w') << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'n') << " " << z(i,j-1)  << " " << z(i-1,j) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " -" << q(i,j,'s') << " -"<< q(i,j,'w') << " "<< z(i+1,j) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " -" << q(i,j,'s') << " " << z(i-1,j) << " "<< z(i+1,j) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " -" << q(i,j,'w') << " " << z(i,j-1) << " "<< z(i+1,j) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'n') << " " <<  z(i,j-1)   << " " << z(i-1,j) << " "<< z(i+1,j) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " " << z(i,j+1) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'s') << " "  << z(i,j+1) << " "<< z(i-1,j) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'w') << " "  << z(i,j+1) << " "<< z(i,j-1) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'e') << " "  << z(i,j-1)   << " "<< z(i,j+1) << " "<< z(i-1,j)<< " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'s') << " -" << q(i,j,'w') << " " << z(i,j+1) << " "<< z(i+1,j)<< " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'s') <<  " " << z(i,j+1)   << " "<< z(i+1,j) << " " << z(i-1,j) << " 0\n";
-          outfile << " -" <<  z(i,j) << " -"  << q(i,j,'w') <<  " " << z(i,j+1)   << " "<< z(i+1,j) << " " << z(i,j-1) << " 0\n";
-          outfile << " -" <<  z(i,j) << " "   << z(i-1,j)   <<  " " << z(i,j+1)   << " "<< z(i+1,j) << " " << z(i,j-1) << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'n') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'n') << " -" << q(i,j,'s') << " "  << z(i-1,j)   << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'n') << " "  << z(i,j-1)   << " -" << q(i,j,'w') << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'n') << " "  << z(i,j-1)   << " "  << z(i-1,j)   << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'n') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " "  << z(i+1,j)   << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'n') << " -" << q(i,j,'s') << " "  << z(i-1,j)   << " "  << z(i+1,j)   << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'n') << " -" << q(i,j,'w') << " "  << z(i,j-1)   << " "  << z(i+1,j)   << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'n') << " "  << z(i,j-1)   << " "  << z(i-1,j)   << " "  << z(i+1,j)   << " 0\n";
 
-          // p v !q
-          outfile << " " <<  z(i,j) << " " << q(i,j,'n') <<  " -" << z(i,j+1) << " 0\n"; // CHECK
-          outfile << " " <<  z(i,j) << " " << q(i,j,'e') <<  " -" << z(i+1,j) << " 0\n";
-          outfile << " " <<  z(i,j) << " " << q(i,j,'s') <<  " -" << z(i,j-1) << " 0\n";
-          outfile << " " <<  z(i,j) << " " << q(i,j,'w') <<  " -" << z(i-1,j) << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i,j,'w') << " "  << z(i,j+1)   << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'s') << " "  << z(i,j+1)   << " "  << z(i-1,j)   << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'e') << " -" << q(i,j,'w') << " "  << z(i,j+1)   << " "  << z(i,j-1)   << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'e') << " "  << z(i,j-1)   << " "  << z(i,j+1)   << " "  << z(i-1,j)   << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'s') << " -" << q(i,j,'w') << " "  << z(i,j+1)   << " "  << z(i+1,j)   << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'s') <<  " " << z(i,j+1)   << " "  << z(i+1,j)   << " "  << z(i-1,j)   << " 0\n";
+          outfile << "-" <<  z(i,j) << " -"  << q(i,j,'w') <<  " " << z(i,j+1)   << " "  << z(i+1,j)   << " "  << z(i,j-1)   << " 0\n";
+          outfile << "-" <<  z(i,j) << " "   << z(i-1,j)   <<  " " << z(i,j+1)   << " "  << z(i+1,j)   << " "  << z(i,j-1)   << " 0\n";
+
+          outfile << " " <<  z(i,j) << " "   << q(i,j,'n') << " -" << z(i,j+1)   << " 0\n"; // CHECK
+          outfile << " " <<  z(i,j) << " "   << q(i,j,'e') << " -" << z(i+1,j)   << " 0\n";
+          outfile << " " <<  z(i,j) << " "   << q(i,j,'s') << " -" << z(i,j-1)   << " 0\n";
+          outfile << " " <<  z(i,j) << " "   << q(i,j,'w') << " -" << z(i-1,j)   << " 0\n";
+
           N_CLAUSES += 20;
         }
 
@@ -237,28 +243,28 @@ int main(int argc, char ** argv) {
         outfile << r(i,j,i,j) << " 0\n";
         N_CLAUSES += 1;
 
-        for (int i_p = 1; i_p <= N; i_p++) {
-          for (int j_p = 1; j_p <= M; j_p++) {
+        for (int ip = 1; ip <= N; ip++) {
+          for (int jp = 1; jp <= M; jp++) {
               // check adjacent boxes for the corners
               // every line except the last one
-              if (i_p + 1 < N) {
+              if (ip + 1 < N) {
                 //bottom adjacent
-                outfile << " -"  << r(i,j,i_p,j_p) << " "  << q(i_p,j_p,'s') << " "  << r(i,j, i_p+1,j_p) << " 0\n";
+                outfile << "-"  << r(i,j,ip,jp) << " "  << q(ip,jp,'s') << " "  << r(i,j, ip+1,jp)  << " 0\n";
                 N_CLAUSES += 1;
               } // every line except the first one
-              if (i_p - 1 > 1) {
+              if (ip - 1 > 1) {
                 //top adjacent
-                outfile << " -"  << r(i,j, i_p,j_p) << " "  << q(i_p,j_p,'n') << " "  << r(i,j, i_p-1,j_p) << " 0\n";
+                outfile << "-"  << r(i,j, ip,jp) << " " << q(ip,jp,'n') << " " << r(i,j, ip - 1,jp) << " 0\n";
                 N_CLAUSES += 1;
               } // every column except the first one
-              if (j_p - 1 > 1) {
+              if (jp - 1 > 1) {
                 //left adjacent
-                outfile << " -"  << r(i,j, i_p,j_p) << " "  <<  q(i_p,j_p,'w') << " "  << r(i,j, i_p,j_p-1) <<  " 0\n";
+                outfile << "-"  << r(i,j, ip,jp) << " " <<  q(ip,jp,'w') << " " << r(i,j, ip,jp-1)  << " 0\n";
                 N_CLAUSES += 1;
               } // every column except the last one
-              if (j_p + 1 < M) {
+              if (jp + 1 < M) {
                 //right adjacent
-                outfile << " -"  << r(i,j, i_p,j_p) << " "  <<  q(i_p,j_p,'e') << " "  << r(i,j, i_p, j_p+1) << " 0\n";
+                outfile << "-"  << r(i,j, ip,jp) << " " <<  q(ip,jp,'e') << " " << r(i,j, ip, jp+1) << " 0\n";
                 N_CLAUSES += 1;
               }
           }
@@ -267,9 +273,10 @@ int main(int argc, char ** argv) {
         // Check for type 4 clauses
         // we iterate over every box
         outfile << "c TYPE 4 CLAUSES: for (i,j) = (" << i << "," << j << "):\n";
-        for (int i_p = 1; i_p <= N; i_p++) {
-          for(int j_p = 1; j_p <=M; j_p++){
-            outfile << z(i,j) << " " << z(i_p,j_p) << " " << r(i,j,i_p,j_p) << " 0\n";
+
+        for (int ip = 1; ip <= N; ip++) {
+          for(int jp = 1; jp <=M; jp++){
+            outfile << z(i,j) << " " << z(ip,jp) << " " << r(i,j,ip,jp) << " 0\n";
             N_CLAUSES += 1;
           }
         }
@@ -281,60 +288,61 @@ int main(int argc, char ** argv) {
 
     // makes restrictions for adjacency of segments
     // upper-left corner
-    outfile << " -" << q(1,1,'n') << " " << q(1,1,'w') << " 0\n";
-    outfile << " -" << q(1,1,'w') << " " << q(1,1,'n') << " 0\n";
+    outfile << "-" << q(1,1,'n') << " " << q(1,1,'w') << " 0\n";
+    outfile << "-" << q(1,1,'w') << " " << q(1,1,'n') << " 0\n";
     N_CLAUSES += 2;
 
     // upper-right corner
-    outfile << " -" << q(1,M,'n') << " " << q(1,M,'e') << " 0\n";
-    outfile << " -" << q(1,M,'e') << " " << q(1,M,'n') << " 0\n";
+    outfile << "-" << q(1,M,'n') << " " << q(1,M,'e') << " 0\n";
+    outfile << "-" << q(1,M,'e') << " " << q(1,M,'n') << " 0\n";
     N_CLAUSES += 2;
 
     // lower-left corner
-    outfile << " -" << q(N,1,'s') << " " << q(N,1,'w') << " 0\n";
-    outfile << " -" << q(N,1,'w') << " " << q(N,1,'s') << " 0\n";
+    outfile << "-" << q(N,1,'s') << " " << q(N,1,'w') << " 0\n";
+    outfile << "-" << q(N,1,'w') << " " << q(N,1,'s') << " 0\n";
     N_CLAUSES += 2;
 
     // lower-right corner
-    outfile << " -" << q(N,M,'s') << " " << q(N,M,'e') << " 0\n";
-    outfile << " -" << q(N,M,'e') << " " << q(N,M,'s') << " 0\n";
+    outfile << "-" << q(N,M,'s') << " " << q(N,M,'e') << " 0\n";
+    outfile << "-" << q(N,M,'e') << " " << q(N,M,'s') << " 0\n";
     N_CLAUSES += 2;
 
+    // now check the borders without the corners
     for (int i = 0; i <= N; i++) {
         for (int j = 0; j <= M; j++) {
-            // upper border without corner
+            // upper border
             if (i == 0 && j != 0 && j != M) {
-                outfile << " -" << q(1,j,'n') << " " << q(1,j+1,'n') << " " << q(1,j,'e') << " 0\n";
-                outfile << q(1,j,'n') << " -" << q(1,j+1,'n') << " " << q(1,j,'e') << " 0\n";
-                outfile << q(1,j,'n') << " " << q(1,j+1,'n') << " -" << q(1,j,'e') << " 0\n";
-                outfile << " -" << q(1,j,'n') << " -" << q(1,j+1,'n') << " -" << q(1,j,'e') << " 0\n";
+                outfile << "-" << q(1,j,'n') << " "  << q(1,j+1,'n') << " "  << q(1,j,'e') << " 0\n";
+                outfile <<        q(1,j,'n') << " -" << q(1,j+1,'n') << " "  << q(1,j,'e') << " 0\n";
+                outfile <<        q(1,j,'n') << " "  << q(1,j+1,'n') << " -" << q(1,j,'e') << " 0\n";
+                outfile << "-" << q(1,j,'n') << " -" << q(1,j+1,'n') << " -" << q(1,j,'e') << " 0\n";
                 N_CLAUSES += 4;
             }
 
-            // lower border without corner
+            // lower border
             else if (i == N && j != 0 && j != M) {
-                outfile << " -" << q(N,j,'s') << " " << q(N,j+1,'s') << " " << q(N,j,'e') << " 0\n";
-                outfile << q(N,j,'s') << " -" << q(N,j+1,'s') << " " << q(N,j,'e') << " 0\n";
-                outfile << q(N,j,'s') << " " << q(N,j+1,'s') << " -" << q(N,j,'e') << " 0\n";
-                outfile << " -" << q(N,j,'s') << " -" << q(N,j+1,'s') << " -" << q(N,j,'e') << " 0\n";
+                outfile << "-" << q(N,j,'s') << " "  << q(N,j+1,'s') << " "  << q(N,j,'e') << " 0\n";
+                outfile <<        q(N,j,'s') << " -" << q(N,j+1,'s') << " "  << q(N,j,'e') << " 0\n";
+                outfile <<        q(N,j,'s') << " "  << q(N,j+1,'s') << " -" << q(N,j,'e') << " 0\n";
+                outfile << "-" << q(N,j,'s') << " -" << q(N,j+1,'s') << " -" << q(N,j,'e') << " 0\n";
                 N_CLAUSES += 4;
             }
 
-            // left border without corner
+            // left border
             if (j == 0 && i != 0 && i != N ){
-                outfile << " -" << q(i,1,'w') << " " << q(i+1,1,'w') << " " << q(i,1,'s') << " 0\n";
-                outfile << q(i,1,'w') << " -" << q(i+1,1,'w') << " " << q(i,1,'s') << " 0\n";
-                outfile << q(i,1,'w') << " " << q(i+1,1,'w') << " -" << q(i,1,'s') << " 0\n";
-                outfile << " -" << q(i,1,'w') << " -" << q(i+1,1,'w') << " -" << q(i,1,'s') << " 0\n";
+                outfile << "-" << q(i,1,'w') << " "  << q(i+1,1,'w') << " "  << q(i,1,'s') << " 0\n";
+                outfile <<        q(i,1,'w') << " -" << q(i+1,1,'w') << " "  << q(i,1,'s') << " 0\n";
+                outfile <<        q(i,1,'w') << " "  << q(i+1,1,'w') << " -" << q(i,1,'s') << " 0\n";
+                outfile << "-" << q(i,1,'w') << " -" << q(i+1,1,'w') << " -" << q(i,1,'s') << " 0\n";
                 N_CLAUSES += 4;
             }
 
-            // right border without corner
+            // right border
             else if (j == M  && i != 0 && i != N){
-                outfile << " -" << q(i,M,'e') << " " << q(i+1,M,'e') << " " << q(i,M,'s') << " 0\n";
-                outfile << q(i,M,'e') << " -" << q(i+1,M,'e') << " " << q(i,M,'s') << " 0\n";
-                outfile << q(i,M,'e') << " " << q(i+1,M,'e') << " -" << q(i,M,'s') << " 0\n";
-                outfile << " -" << q(i,M,'e') << " -" << q(i+1,M,'e') << " -" << q(i,M,'s') << " 0\n";
+                outfile << "-" << q(i,M,'e') << " "  << q(i+1,M,'e') << " "  << q(i,M,'s') << " 0\n";
+                outfile <<       q(i,M,'e') << " -" << q(i+1,M,'e') << " "  << q(i,M,'s') << " 0\n";
+                outfile <<       q(i,M,'e') << " "  << q(i+1,M,'e') << " -" << q(i,M,'s') << " 0\n";
+                outfile << "-" << q(i,M,'e') << " -" << q(i+1,M,'e') << " -" << q(i,M,'s') << " 0\n";
                 N_CLAUSES += 4;
             }
 
@@ -342,24 +350,24 @@ int main(int argc, char ** argv) {
             if (i > 0 && i < N && j > 0 && j < M) {
 
                 // when a segment is adjacent to (i,j), there is another segment adjacent to (i,j)
-                outfile << " -" << q(i,j,'e') << " " << q(i,j,'s') << " " << q(i+1,j+1,'w') << " " << q(i+1,j+1,'n') << " 0\n";
-                outfile << q(i,j,'e') << " -" << q(i,j,'s') << " " << q(i+1,j+1,'w') << " " << q(i+1,j+1,'n') << " 0\n";
-                outfile << q(i,j,'e') << " " << q(i,j,'s') << " -" << q(i+1,j+1,'w') << " " << q(i+1,j+1,'n') << " 0\n";
-                outfile << q(i,j,'e') << " " << q(i,j,'s') << " " << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " 0\n";
+                outfile << "-" << q(i,j,'e') << " "  << q(i,j,'s') << " " << q(i+1,j+1,'w') << " " << q(i+1,j+1,'n') << " 0\n";
+                outfile <<        q(i,j,'e') << " -" << q(i,j,'s') << " " << q(i+1,j+1,'w') << " " << q(i+1,j+1,'n') << " 0\n";
+                outfile <<        q(i,j,'e') << " "  << q(i,j,'s') << " -"<< q(i+1,j+1,'w') << " " << q(i+1,j+1,'n') << " 0\n";
+                outfile <<        q(i,j,'e') << " "  << q(i,j,'s') << " " << q(i+1,j+1,'w') << " -"<< q(i+1,j+1,'n') << " 0\n";
 
                 // there are only two adjacent segments for (i,j)
-                outfile << " -" << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'w') << " 0\n";
-                outfile << " -" << q(i,j,'e') << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'n') << " 0\n";
-                outfile << " -" << q(i,j,'e') << " -" << q(i+1,j+1,'w') << " -" << q(i,j,'s')  << " 0\n";
-                outfile << " -" << q(i,j,'e') << " -" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " 0\n";
-                outfile << " -" << q(i,j,'e') << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'s') << " 0\n";
-                outfile << " -" << q(i,j,'e') << " -" << q(i+1,j+1,'n') << " -" << q(i+1,j+1,'w')  << " 0\n";
-                outfile << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'w') << " -" << q(i,j,'e') << " 0\n";
-                outfile << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " 0\n";
-                outfile << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'e') << " 0\n";
-                outfile << " -" << q(i,j,'s') << " -" << q(i+1,j+1,'n') << " -" << q(i+1,j+1,'w') << " 0\n";
-                outfile << " -" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'e') << " 0\n";
-                outfile << " -" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'s') << " 0\n";
+                outfile << "-" << q(i,j,'e')     << " -" << q(i,j,'s')     << " -" << q(i+1,j+1,'w') << " 0\n";
+                outfile << "-" << q(i,j,'e')     << " -" << q(i,j,'s')     << " -" << q(i+1,j+1,'n') << " 0\n";
+                outfile << "-" << q(i,j,'e')     << " -" << q(i+1,j+1,'w') << " -" << q(i,j,'s')     << " 0\n";
+                outfile << "-" << q(i,j,'e')     << " -" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " 0\n";
+                outfile << "-" << q(i,j,'e')     << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'s')     << " 0\n";
+                outfile << "-" << q(i,j,'e')     << " -" << q(i+1,j+1,'n') << " -" << q(i+1,j+1,'w') << " 0\n";
+                outfile << "-" << q(i,j,'s')     << " -" << q(i+1,j+1,'w') << " -" << q(i,j,'e')     << " 0\n";
+                outfile << "-" << q(i,j,'s')     << " -" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " 0\n";
+                outfile << "-" << q(i,j,'s')     << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'e')     << " 0\n";
+                outfile << "-" << q(i,j,'s')     << " -" << q(i+1,j+1,'n') << " -" << q(i+1,j+1,'w') << " 0\n";
+                outfile << "-" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'e')     << " 0\n";
+                outfile << "-" << q(i+1,j+1,'w') << " -" << q(i+1,j+1,'n') << " -" << q(i,j,'s')     << " 0\n";
                 N_CLAUSES += 16;
             }
         }
